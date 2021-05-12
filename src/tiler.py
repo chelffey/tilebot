@@ -75,6 +75,7 @@ if __name__ == "__main__":
     # initialise transparent padding 
     row = np.full((DIFF, SIZE[0], 4), [255, 255, 255, 0], np.uint8) 
     col = np.full((SIZE[0], DIFF, 4), [255, 255, 255, 0], np.uint8) 
+    square = np.full((SIZE[0], SIZE[0], 4), [255, 255, 255, 0], np.uint8)
 
     files = [
         "./pic/bamboo.jpg",
@@ -86,26 +87,42 @@ if __name__ == "__main__":
     ]
 
     # open files, create thumbnail album, save. 
-    arr = None
-    for file in files:
-        a = gen_thumbnail(file)
-        print(f"dim {a.shape}")
-        if arr is None:
-            arr = a
-        else:
-            arr = np.concatenate((arr, row, a))
-    im = Image.fromarray(arr)
-    im.save("./pic/merge-auto.png", "PNG")
+    # arr = None
+    # for file in files:
+    #     a = gen_thumbnail(file)
+    #     print(f"dim {a.shape}")
+    #     if arr is None:
+    #         arr = a
+    #     else:
+    #         arr = np.concatenate((arr, row, a))
+    # im = Image.fromarray(arr)
+    # im.save("./pic/merge-auto.png", "PNG")
 
+    # same, but save in ROWS OF GIVEN LENGTH
+    ROWSIZE = 4
+    EMPTY = "empty"
 
-    # # open thumbnails as NP arrays in 4dim RGBA format.
-    # d = gen_thumbnail("./pic/bamboo.jpg")
-    # a = gen_thumbnail("./pic/coconut.png")
-    # b = gen_thumbnail("./pic/fish.png")
-    # c = gen_thumbnail("./pic/shiro.jpg")
-    # e = gen_thumbnail("./pic/calico-cat.png")
-    # f = gen_thumbnail("./pic/ghost.png")
+    # transform file list into structured grid of row length ROWSIZE
+    to_add = ROWSIZE - (len(files) % ROWSIZE)
+    if to_add != ROWSIZE:
+        files.extend([EMPTY]*to_add)
+    arr = np.array(files)
+    newFiles = arr.reshape(len(files) // ROWSIZE, ROWSIZE)
+    print(newFiles)
 
+    # # run. 
+    # arr = None
+    # for file in files:
+    #     a = gen_thumbnail(file)
+    #     print(f"dim {a.shape}")
+    #     if arr is None:
+    #         arr = a
+    #     else:
+    #         arr = np.concatenate((arr, row, a))
+    # im = Image.fromarray(arr)
+    # im.save("./pic/merge-auto.png", "PNG")
+
+    # OLD----
     # arr = np.concatenate((a, row, b, row, c, row, d, row, e, row, f))
     # arr2 = np.hstack((a, col, b, col, c, col, d, col, e, col, f))
 
