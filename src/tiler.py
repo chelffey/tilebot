@@ -59,7 +59,8 @@ Returns as an np array of thumbnail SIZE, in 4dim RGBA format.
 def gen_thumbnail(filename):
     with Image.open(filename) as im:
         im = im.convert("RGBA") # add transparency
-        im = crop_square(im) # crop to square, 'cover'. 
+        # THIS LINE: toggle to change whether square or original aspect ratio.
+        # im = crop_square(im) # crop to square, 'cover'. 
         im.thumbnail(SIZE) # scale down to thumbnail.
         a = np.asarray(im) # create np array from values.
         a = pad_thumbnail(a, SIZE[0]) # for robustness. 
@@ -75,35 +76,40 @@ if __name__ == "__main__":
     row = np.full((DIFF, SIZE[0], 4), [255, 255, 255, 0], np.uint8) 
     col = np.full((SIZE[0], DIFF, 4), [255, 255, 255, 0], np.uint8) 
 
-    # files = [
-    #     "./pic/bamboo.jpg",
-    #     "./pic/coconut.png",
-    #     "./pic/fish.png",
-    #     "./pic/shiro.jpg"
-    #     "./pic/calico-cat.png"
-    #     "./pic/ghost.png"
-    # ]
+    files = [
+        "./pic/bamboo.jpg",
+        "./pic/coconut.png",
+        "./pic/fish.png",
+        "./pic/shiro.jpg",
+        "./pic/calico-cat.png",
+        "./pic/ghost.png"
+    ]
 
-    # open thumbnails as NP arrays in 4dim RGBA format.
-    d = gen_thumbnail("./pic/bamboo.jpg")
-    a = gen_thumbnail("./pic/coconut.png")
-    b = gen_thumbnail("./pic/fish.png")
-    c = gen_thumbnail("./pic/shiro.jpg")
-    e = gen_thumbnail("./pic/calico-cat.png")
-    f = gen_thumbnail("./pic/ghost.png")
-
-    # the thumbnail constraints are "no greater than given SIZE." as such, its possible for some thumbnails to be smaller than the given size. These thumbnails require scaling or padding. 
-    print(f"A: dim {a.shape}")
-    print(f"B: dim {b.shape}")
-    print(f"C: dim {c.shape}")
-    print(f"D: dim {d.shape}")
-    print(f"E: dim {e.shape}")
-    print(f"F: dim {f.shape}")
-
-    arr = np.concatenate((a, row, b, row, c, row, d, row, e, row, f))
-    arr2 = np.hstack((a, col, b, col, c, col, d, col, e, col, f))
-
+    # open files, create thumbnail album, save. 
+    arr = None
+    for file in files:
+        a = gen_thumbnail(file)
+        print(f"dim {a.shape}")
+        if arr is None:
+            arr = a
+        else:
+            arr = np.concatenate((arr, row, a))
     im = Image.fromarray(arr)
-    im.save("./pic/merge-thumbnail-2.png", "PNG")
-    im = Image.fromarray(arr2)
-    im.save("./pic/merge-thumbnail-3.png", "PNG")
+    im.save("./pic/merge-auto.png", "PNG")
+
+
+    # # open thumbnails as NP arrays in 4dim RGBA format.
+    # d = gen_thumbnail("./pic/bamboo.jpg")
+    # a = gen_thumbnail("./pic/coconut.png")
+    # b = gen_thumbnail("./pic/fish.png")
+    # c = gen_thumbnail("./pic/shiro.jpg")
+    # e = gen_thumbnail("./pic/calico-cat.png")
+    # f = gen_thumbnail("./pic/ghost.png")
+
+    # arr = np.concatenate((a, row, b, row, c, row, d, row, e, row, f))
+    # arr2 = np.hstack((a, col, b, col, c, col, d, col, e, col, f))
+
+    # im = Image.fromarray(arr)
+    # im.save("./pic/merge-thumbnail-2.png", "PNG")
+    # im = Image.fromarray(arr2)
+    # im.save("./pic/merge-thumbnail-3.png", "PNG")
