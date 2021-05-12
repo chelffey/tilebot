@@ -56,7 +56,9 @@ def pad_thumbnail(a, side):
 Opens image file from local directory. 
 Returns as an np array of thumbnail SIZE, in 4dim RGBA format. 
 '''
-def gen_thumbnail(filename):
+def gen_thumbnail(filename, default):
+    if (filename == EMPTY):
+        return default
     with Image.open(filename) as im:
         im = im.convert("RGBA") # add transparency
         # THIS LINE: toggle to change whether square or original aspect ratio.
@@ -73,8 +75,8 @@ if __name__ == "__main__":
     print("hello world!! im tilebot")
     
     # initialise transparent padding 
-    row = np.full((DIFF, SIZE[0], 4), [255, 255, 255, 0], np.uint8) 
-    col = np.full((SIZE[0], DIFF, 4), [255, 255, 255, 0], np.uint8) 
+    row_space = np.full((DIFF, SIZE[0], 4), [255, 255, 255, 0], np.uint8) 
+    col_space = np.full((SIZE[0], DIFF, 4), [255, 255, 255, 0], np.uint8) 
     square = np.full((SIZE[0], SIZE[0], 4), [255, 255, 255, 0], np.uint8)
 
     files = [
@@ -86,20 +88,8 @@ if __name__ == "__main__":
         "./pic/ghost.png"
     ]
 
-    # open files, create thumbnail album, save. 
-    # arr = None
-    # for file in files:
-    #     a = gen_thumbnail(file)
-    #     print(f"dim {a.shape}")
-    #     if arr is None:
-    #         arr = a
-    #     else:
-    #         arr = np.concatenate((arr, row, a))
-    # im = Image.fromarray(arr)
-    # im.save("./pic/merge-auto.png", "PNG")
-
     # same, but save in ROWS OF GIVEN LENGTH
-    ROWSIZE = 4
+    ROWSIZE = 3
     EMPTY = "empty"
 
     # transform file list into structured grid of row length ROWSIZE
@@ -108,25 +98,23 @@ if __name__ == "__main__":
         files.extend([EMPTY]*to_add)
     arr = np.array(files)
     newFiles = arr.reshape(len(files) // ROWSIZE, ROWSIZE)
-    print(newFiles)
 
-    # # run. 
-    # arr = None
-    # for file in files:
-    #     a = gen_thumbnail(file)
-    #     print(f"dim {a.shape}")
-    #     if arr is None:
-    #         arr = a
-    #     else:
-    #         arr = np.concatenate((arr, row, a))
-    # im = Image.fromarray(arr)
-    # im.save("./pic/merge-auto.png", "PNG")
-
-    # OLD----
-    # arr = np.concatenate((a, row, b, row, c, row, d, row, e, row, f))
-    # arr2 = np.hstack((a, col, b, col, c, col, d, col, e, col, f))
-
-    # im = Image.fromarray(arr)
-    # im.save("./pic/merge-thumbnail-2.png", "PNG")
-    # im = Image.fromarray(arr2)
-    # im.save("./pic/merge-thumbnail-3.png", "PNG")
+    # get each row.
+    rowList = []
+    for row in newFiles:
+        print(f"and now we have...{row}")
+        # create each row and add to list.
+        this_row = None
+        for file in row:
+            a = gen_thumbnail(file, square)
+            if this_row is None:
+                this_row = a
+            else:
+                this_row = np.hstack((this_row, col_space, a))
+        rowList.append(this_row)
+    
+    # concat rows into a grid. 
+    arr = np.concatenate([np.array(i) for i in rowList]) # elegant numpy approach: from https://stackoverflow.com/questions/10346336/list-of-lists-into-numpy-array
+    
+    im = Image.fromarray(arr)
+    im.save("./pic/merge-GRID.png", "PNG")
