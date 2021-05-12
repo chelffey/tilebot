@@ -6,7 +6,8 @@ import numpy as np
 from PIL import Image
 
 # global vars
-size = 136, 136
+SIZE = 136, 136
+DIFF = 20
 
 '''
 Crops given 'Image' object to the largest square possible. 
@@ -22,51 +23,85 @@ def crop_square(im):
     right = width - width_pad
     bottom = height - height_pad 
     return im.crop((left, top, right, bottom))
-    # print(f"cropped to width {left}..{right}, height {top}..{bottom}.")
-    # print(f"side length: {side_length}")
+
 
 '''
-Opens the given image file from local directory. 
-Returns as an np array of thumbnail size. 
+Purpose: transparent-pads images to precisely correct size. Robustness for images that are too small, or one pixel off the correct size. 
+Input: a = a numpy array representing thumbnail. 
+    Assumption: thumbnail x, y dim are NO GREATER than size. 
+side = desired side length. 
+Returns thumbnail of precisely (SIZE x SIZE x 4).
+Padding will CENTRE the thumbnail. 
+'''
+def pad_thumbnail(a, side):
+    ax, ay, az = a.shape   
+    if (ax != side): # not tall enough. add row of (padx x y).
+        padx = side - ax
+        x1 = padx // 2
+        x2 = x1 + padx % 2
+        row1 = np.full((x1, ay, 4), [255, 255, 255, 0], np.uint8) 
+        row2 = np.full((x2, ay, 4), [255, 255, 255, 0], np.uint8) 
+        a = np.concatenate((row1, a, row2))
+    if (ay != side): # not wide enough. add col of (pady x side)
+        pady = side - ay
+        y1 = pady // 2
+        y2 = y1 + pady % 2
+        col1 = np.full((side, y1, 4), [255, 255, 255, 0], np.uint8) 
+        col2 = np.full((side, y2, 4), [255, 255, 255, 0], np.uint8) 
+        a = np.hstack((col1, a, col2))
+    return a
+
+
+'''
+Opens image file from local directory. 
+Returns as an np array of thumbnail SIZE, in 4dim RGBA format. 
 '''
 def gen_thumbnail(filename):
     with Image.open(filename) as im:
-        im = im.convert("RGBA")
-        print(im.size)
-        im = crop_square(im)
-        im.thumbnail(size)
-        a = np.asarray(im)
+        im = im.convert("RGBA") # add transparency
+        im = crop_square(im) # crop to square, 'cover'. 
+        im.thumbnail(SIZE) # scale down to thumbnail.
+        a = np.asarray(im) # create np array from values.
+        a = pad_thumbnail(a, SIZE[0]) # for robustness. 
     return a
+
+
+
 
 if __name__ == "__main__":
     print("hello world!! im tilebot")
     
-    # open np thumbnails
+    # initialise transparent padding 
+    row = np.full((DIFF, SIZE[0], 4), [255, 255, 255, 0], np.uint8) 
+    col = np.full((SIZE[0], DIFF, 4), [255, 255, 255, 0], np.uint8) 
+
+    # files = [
+    #     "./pic/bamboo.jpg",
+    #     "./pic/coconut.png",
+    #     "./pic/fish.png",
+    #     "./pic/shiro.jpg"
+    #     "./pic/calico-cat.png"
+    #     "./pic/ghost.png"
+    # ]
+
+    # open thumbnails as NP arrays in 4dim RGBA format.
     d = gen_thumbnail("./pic/bamboo.jpg")
     a = gen_thumbnail("./pic/coconut.png")
     b = gen_thumbnail("./pic/fish.png")
     c = gen_thumbnail("./pic/shiro.jpg")
-    #d = gen_thumbnail("./pic/calico-cat.png")
+    e = gen_thumbnail("./pic/calico-cat.png")
+    f = gen_thumbnail("./pic/ghost.png")
 
-    lx, ly, lz = a.shape
-    bx, by, bz = b.shape
-    cx, cy, cz = c.shape
-    print(f"A: dim x={lx}, y={ly}, z={lz}")
-    print(f"B: dim x={bx}, y={by}, z={bz}")
-    print(f"C: dim x={cx}, y={cy}, z={cz}")
-    dx, dy, dz = d.shape
-    print(f"D: dim x={dx}, y={dy}, z={dz}")
-    # clearly, sometimes the dimensions are one pixel off. 
+    # the thumbnail constraints are "no greater than given SIZE." as such, its possible for some thumbnails to be smaller than the given size. These thumbnails require scaling or padding. 
+    print(f"A: dim {a.shape}")
+    print(f"B: dim {b.shape}")
+    print(f"C: dim {c.shape}")
+    print(f"D: dim {d.shape}")
+    print(f"E: dim {e.shape}")
+    print(f"F: dim {f.shape}")
 
-    # TESTTTTTTTT
-    row = np.full((100, 20, 4), [255, 255, 255, 0], np.uint8) # must be unsigned integer to use.
-    test = np.full((100, 20, 4), [255, 100, 0, 255], np.uint8)
-    arr = np.concatenate((row, test, row, test))
-    im = Image.fromarray(arr)
-    im.save("./pic/TEST.png", "PNG")
-
-    arr = np.concatenate((a, b, c, d))
-    arr2 = np.hstack((a, c, d))
+    arr = np.concatenate((a, row, b, row, c, row, d, row, e, row, f))
+    arr2 = np.hstack((a, col, b, col, c, col, d, col, e, col, f))
 
     im = Image.fromarray(arr)
     im.save("./pic/merge-thumbnail-2.png", "PNG")
