@@ -62,7 +62,7 @@ def gen_thumbnail(filename, default):
     with Image.open(filename) as im:
         im = im.convert("RGBA") # add transparency
         # THIS LINE: toggle to change whether square or original aspect ratio.
-        # im = crop_square(im) # crop to square, 'cover'. 
+        im = crop_square(im) # crop to square, 'cover'. 
         im.thumbnail(SIZE) # scale down to thumbnail.
         a = np.asarray(im) # create np array from values.
         a = pad_thumbnail(a, SIZE[0]) # for robustness. 
@@ -85,11 +85,14 @@ if __name__ == "__main__":
         "./pic/fish.png",
         "./pic/shiro.jpg",
         "./pic/calico-cat.png",
-        "./pic/ghost.png"
+        "./pic/ghost.png",
+        "./pic/field.jpg",
+        "./pic/blue.gif",
+        "./pic/boy.jpg"
     ]
 
     # same, but save in ROWS OF GIVEN LENGTH
-    ROWSIZE = 3
+    ROWSIZE = 5
     EMPTY = "empty"
 
     # transform file list into structured grid of row length ROWSIZE
@@ -102,7 +105,6 @@ if __name__ == "__main__":
     # get each row.
     rowList = []
     for row in newFiles:
-        print(f"and now we have...{row}")
         # create each row and add to list.
         this_row = None
         for file in row:
@@ -114,6 +116,7 @@ if __name__ == "__main__":
         rowList.append(this_row)
     
     # concat rows into a grid. 
+    # TODO: add horizontal padding space between rows. 
     arr = np.concatenate([np.array(i) for i in rowList]) # elegant numpy approach: from https://stackoverflow.com/questions/10346336/list-of-lists-into-numpy-array
     
     im = Image.fromarray(arr)
