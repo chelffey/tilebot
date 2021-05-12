@@ -8,6 +8,8 @@ from PIL import Image
 # global vars
 SIZE = 136, 136
 DIFF = 20
+ROWSIZE = 5
+EMPTY = "empty"
 
 '''
 Crops given 'Image' object to the largest square possible. 
@@ -69,31 +71,15 @@ def gen_thumbnail(filename, default):
     return a
 
 
-
-
-if __name__ == "__main__":
-    print("hello world!! im tilebot")
-    
+'''
+Main functionality. Converts list of filenames into a tiled grid of thumbnails.
+Returns as Image object. 
+'''
+def tile_images(files):
     # initialise transparent padding 
     row_space = np.full((DIFF, SIZE[0], 4), [255, 255, 255, 0], np.uint8) 
     col_space = np.full((SIZE[0], DIFF, 4), [255, 255, 255, 0], np.uint8) 
     square = np.full((SIZE[0], SIZE[0], 4), [255, 255, 255, 0], np.uint8)
-
-    files = [
-        "./pic/bamboo.jpg",
-        "./pic/coconut.png",
-        "./pic/fish.png",
-        "./pic/shiro.jpg",
-        "./pic/calico-cat.png",
-        "./pic/ghost.png",
-        "./pic/field.jpg",
-        "./pic/blue.gif",
-        "./pic/boy.jpg"
-    ]
-
-    # same, but save in ROWS OF GIVEN LENGTH
-    ROWSIZE = 5
-    EMPTY = "empty"
 
     # transform file list into structured grid of row length ROWSIZE
     to_add = ROWSIZE - (len(files) % ROWSIZE)
@@ -117,7 +103,28 @@ if __name__ == "__main__":
     
     # concat rows into a grid. 
     # TODO: add horizontal padding space between rows. 
+
     arr = np.concatenate([np.array(i) for i in rowList]) # elegant numpy approach: from https://stackoverflow.com/questions/10346336/list-of-lists-into-numpy-array
-    
     im = Image.fromarray(arr)
+    return im
+    
+
+
+
+if __name__ == "__main__":
+    print("hello world!! im tilebot")
+
+    files = [
+        "./pic/bamboo.jpg",
+        "./pic/coconut.png",
+        "./pic/fish.png",
+        "./pic/shiro.jpg",
+        "./pic/calico-cat.png",
+        "./pic/ghost.png",
+        "./pic/field.jpg",
+        "./pic/blue.gif",
+        "./pic/boy.jpg"
+    ]
+
+    im = tile_images(files)
     im.save("./pic/merge-GRID.png", "PNG")
