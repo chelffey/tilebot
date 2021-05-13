@@ -7,8 +7,8 @@ from PIL import Image
 
 # global vars
 SIZE = 136, 136
-DIFF = 20
-ROWSIZE = 5
+DIFF = 10
+ROWSIZE = 4
 EMPTY = "empty"
 
 '''
@@ -80,31 +80,26 @@ def tile_images(files):
     row_space = np.full((DIFF, SIZE[0], 4), [255, 255, 255, 0], np.uint8) 
     col_space = np.full((SIZE[0], DIFF, 4), [255, 255, 255, 0], np.uint8) 
     square = np.full((SIZE[0], SIZE[0], 4), [255, 255, 255, 0], np.uint8)
+    row_div = np.full((DIFF, SIZE[0]*ROWSIZE + DIFF*(ROWSIZE-1), 4), [255, 255, 255, 0], np.uint8)
 
-    # transform file list into structured grid of row length ROWSIZE
+    # reshape 1D file list into 2D structured grid of row length ROWSIZE
     to_add = ROWSIZE - (len(files) % ROWSIZE)
     if to_add != ROWSIZE:
         files.extend([EMPTY]*to_add)
     arr = np.array(files)
     newFiles = arr.reshape(len(files) // ROWSIZE, ROWSIZE)
 
-    # get each row.
+    # create each row array and add to list.
     rowList = []
     for row in newFiles:
-        # create each row and add to list.
-        this_row = None
+        thisRow = []
         for file in row:
-            a = gen_thumbnail(file, square)
-            if this_row is None:
-                this_row = a
-            else:
-                this_row = np.hstack((this_row, col_space, a))
-        rowList.append(this_row)
-    
-    # concat rows into a grid. 
-    # TODO: add horizontal padding space between rows. 
+            thisRow.extend([gen_thumbnail(file, square), col_space])
+        rowArr = np.hstack([np.array(i) for i in thisRow[:-1]])
+        rowList.extend([rowArr, row_div])
 
-    arr = np.concatenate([np.array(i) for i in rowList]) # elegant numpy approach: from https://stackoverflow.com/questions/10346336/list-of-lists-into-numpy-array
+    # concat row arrays into a single grid array
+    arr = np.concatenate([np.array(i) for i in rowList[:-1]]) # elegant numpy approach: from https://stackoverflow.com/questions/10346336/list-of-lists-into-numpy-array
     im = Image.fromarray(arr)
     return im
     
